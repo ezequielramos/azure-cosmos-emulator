@@ -26,15 +26,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Installing dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Black Format Checking
+        run: |
+          black . --check --diff
+
       - name: Run build
         run: |
           docker build . -t $IMAGE_NAME:latest
-          
 
       - name: Run docker container
         run: |
           docker run -d -p 8081:8081 $IMAGE_NAME:latest
-          
+
       - name: Test it
         run: |
           python -m pytest
