@@ -1,0 +1,2 @@
+azure-cosmos==3.1.1
+Flask==1.1.1
