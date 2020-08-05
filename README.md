@@ -1,6 +1,6 @@
 # azure-cosmos-emulator
 
-<img src="https://img.shields.io/badge/python-3.7.6-blue"> <img src="https://img.shields.io/github/license/digital-divas/PINP">
+<img src="https://img.shields.io/badge/python-3.7.5-blue"> <img src="https://img.shields.io/github/license/digital-divas/PINP">
 
 azure-cosmos-emulator is a mock to the Azure Cosmos Database using Flask. You can use it to test your application that integrates with CosmosDB.
 
