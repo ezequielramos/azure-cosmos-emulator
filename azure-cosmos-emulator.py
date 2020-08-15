@@ -1,6 +1,7 @@
 import json
 import time
 import uuid
+import os
 
 from flask import Flask, request, Response
 
@@ -40,13 +41,38 @@ def index():
     )
 
 
-def query(database_name, collection_name, query):
-    print(query)
-    return {
-        "_rid": collection_name,
-        "Documents": items[database_name][collection_name],
-        "_count": len(items[database_name][collection_name]),
-    }
+def query(database_name, collection_name, query, parameters):
+    if type(query) == dict:
+        query = query["query"]
+    print(query, parameters)
+
+    documents = []
+
+    for item in items[database_name][collection_name]:
+
+        if "ARRAY_CONTAINS" in query:
+            parsed_query = query[
+                query.index("ARRAY_CONTAINS") + len("ARRAY_CONTAINS") :
+            ]
+            parsed_query = parsed_query[
+                parsed_query.index("(") + 1 : parsed_query.index(")")
+            ]
+            param, col = parsed_query.split(",")
+            param = param.strip()
+            col = col.split(".")[1]
+            col = col.strip()
+
+            for parameter in parameters:
+                if parameter["name"] == param:
+                    for value in parameter["value"]:
+                        print("value", item[col], value)
+                        if value == item[col]:
+                            documents.append(item)
+
+        else:
+            documents.append(item)
+
+    return {"_rid": collection_name, "Documents": documents, "_count": len(documents)}
 
 
 def insert_item(database_name, collection_name, item):
@@ -81,7 +107,14 @@ def docs_post(database_name, collection_name):
         print("It's a query")
 
         return Response(
-            json.dumps(query(database_name, collection_name, payload["query"])),
+            json.dumps(
+                query(
+                    database_name,
+                    collection_name,
+                    payload["query"],
+                    payload["parameters"] if "parameters" in payload else "",
+                )
+            ),
             200,
             content_type="application/json",
         )
@@ -106,6 +139,7 @@ def delete(database_name, collection_name, item_id):
 
         if items[database_name][collection_name][i]["id"] == item_id:
             items[database_name][collection_name].pop(i)
+            break
         else:
             i += 1
 
@@ -142,4 +176,9 @@ def get_db_coll_info(database_name, collection_name):
     return Response(json.dumps(return_value), 200, content_type="application/json")
 
 
-app.run(host="0.0.0.0", port=8081)
+using_ssl = os.getenv("AZURE_EMULATOR_USING_SSL", False)
+
+if using_ssl:
+    app.run(host="0.0.0.0", port=8081, ssl_context="adhoc")
+else:
+    app.run(host="0.0.0.0", port=8081)
